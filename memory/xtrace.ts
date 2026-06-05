@@ -300,22 +300,22 @@ export async function getMemoryContext(
     get<UserProfile>(
       `${base}/user_profiles`,
       accessToken,
-      { "filter[user_id]": userId }
+      { user_id: `eq.${userId}` }
     ),
     get<Goal>(
       `${base}/goals`,
       accessToken,
-      { "filter[user_id]": userId, "filter[status]": "active", order: "priority.asc" }
+      { user_id: `eq.${userId}`, status: "eq.active", order: "priority.asc" }
     ),
     get<GoalProgress>(
       `${base}/goal_progress`,
       accessToken,
-      { "filter[user_id]": userId, order: "recorded_at.desc", limit: "50" }
+      { user_id: `eq.${userId}`, order: "recorded_at.desc", limit: "50" }
     ),
     get<EmotionalState>(
       `${base}/emotional_states`,
       accessToken,
-      { "filter[user_id]": userId, order: "recorded_at.desc", limit: "7" }
+      { user_id: `eq.${userId}`, order: "recorded_at.desc", limit: "7" }
     ),
   ]);
 
@@ -417,7 +417,7 @@ export async function saveSessionMemory(
   if (session.plan_adjustments) {
     await Promise.all(
       Object.entries(session.plan_adjustments).map(([goalId, newPriority]) =>
-        patch(`${base}/goals?filter[id]=${goalId}`, accessToken, {
+        patch(`${base}/goals?id=eq.${goalId}`, accessToken, {
           priority: newPriority,
           updated_at: new Date().toISOString(),
         })

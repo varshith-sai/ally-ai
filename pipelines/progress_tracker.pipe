@@ -1,0 +1,73 @@
+{
+	"components": [
+		{
+			"id": "webhook_1",
+			"provider": "webhook",
+			"config": { "hideForm": true, "mode": "Source", "parameters": {}, "type": "webhook" },
+			"ui": { "position": { "x": 20, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "agent_rocketride_1",
+			"provider": "agent_rocketride",
+			"config": {
+				"instructions": [
+					"You are Ally's weekly progress review engine. You receive a trigger payload containing a user_id and access_token. Your job is to review all goals, assess progress, recalculate priorities, update the plan in Butterbase, and compose a WhatsApp-ready weekly summary message.",
+
+					"STEP 1 — FETCH DATA: Retrieve everything needed for the review. Use Authorization: Bearer {access_token} for all calls. GET ${ROCKETRIDE_BUTTERBASE_API_URL}/goals?filter[user_id]={user_id}&filter[status]=active — all active goals. GET ${ROCKETRIDE_BUTTERBASE_API_URL}/goal_progress?filter[user_id]={user_id}&order=recorded_at.desc&limit=20 — recent progress sessions. GET ${ROCKETRIDE_BUTTERBASE_API_URL}/emotional_states?filter[user_id]={user_id}&order=recorded_at.desc&limit=7 — last 7 emotional check-ins. GET ${ROCKETRIDE_BUTTERBASE_API_URL}/user_profiles?filter[user_id]={user_id} — knowledge context and preferences.",
+
+					"STEP 2 — CALCULATE PROGRESS PER GOAL: For each active goal, compute: (a) latest progress_pct from goal_progress records; (b) total session hours logged this week; (c) momentum — is progress accelerating, steady, or stalling (compare this week vs last week)?",
+
+					"STEP 3 — RECALCULATE PRIORITIES: Re-rank goals based on: (a) goals closest to completion get a boost; (b) stalled goals get deprioritized unless they are blocking other goals; (c) if average stress_level this week >= 7, reduce all estimated_hours by 20% and add a note; (d) identify any goal that has had zero progress for 2+ weeks — flag it. Update each goal's priority field via PATCH ${ROCKETRIDE_BUTTERBASE_API_URL}/goals/{goal_id} with the new priority integer (1 = highest). Use Authorization: Bearer {access_token}.",
+
+					"STEP 4 — COMPOSE WHATSAPP SUMMARY: Write a short, warm weekly digest (max 250 words, WhatsApp-friendly formatting with line breaks). Structure: (a) one encouraging opener based on overall progress; (b) 2-3 bullet highlights — biggest win this week, goal gaining momentum, anything to watch; (c) top 2 goals to focus on next week with a specific suggested time block from their daily_routines; (d) if any goal is stalled, a gentle nudge — not pressure; (e) close with a short motivational line. Keep it human, not robotic.",
+
+					"STEP 5 — OUTPUT: Return the WhatsApp message text as the answer. The caller (Butterbase cron function) will send it via Photon.",
+
+					"Always pass Authorization: Bearer {access_token} in every API call. Extract user_id and access_token from the webhook payload body."
+				],
+				"max_waves": 6,
+				"parameters": {}
+			},
+			"input": [{ "lane": "text", "from": "webhook_1" }],
+			"ui": { "position": { "x": 240, "y": 200 }, "measured": { "width": 150, "height": 86 } }
+		},
+		{
+			"id": "response_answers_1",
+			"provider": "response_answers",
+			"config": { "laneName": "answers" },
+			"input": [{ "lane": "answers", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 460, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "llm_anthropic_1",
+			"provider": "llm_anthropic",
+			"config": {
+				"profile": "claude-sonnet",
+				"claude-sonnet": {
+					"apikey": "${ROCKETRIDE_ANTHROPIC_KEY}",
+					"model": "claude-sonnet-4-6"
+				},
+				"parameters": {}
+			},
+			"control": [{ "classType": "llm", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 130, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "memory_internal_1",
+			"provider": "memory_internal",
+			"config": { "type": "memory_internal" },
+			"control": [{ "classType": "memory", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 310, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "tool_http_request_1",
+			"provider": "tool_http_request",
+			"config": { "type": "tool_http_request" },
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 490, "y": 360 }, "measured": { "width": 150, "height": 40 } }
+		}
+	],
+	"project_id": "1129622f-aac1-4786-a344-a3ccb882d34e",
+	"viewport": { "x": 0, "y": 0, "zoom": 1 },
+	"version": 1
+}

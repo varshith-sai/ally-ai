@@ -1,0 +1,20 @@
+{
+  "name": "ally-whatsapp",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "check": "tsx check.ts"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "rocketride": "latest",
+    "spectrum-ts": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,75 @@
+{
+	"components": [
+		{
+			"id": "chat_1",
+			"provider": "chat",
+			"config": { "hideForm": true, "mode": "Source", "parameters": {}, "type": "chat" },
+			"ui": { "position": { "x": 20, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "agent_rocketride_1",
+			"provider": "agent_rocketride",
+			"config": {
+				"instructions": [
+					"You are Ally, a warm and empathetic AI life coach. You help users manage multiple goals by understanding their knowledge, schedule, and emotional state.",
+
+					"MEMORY CONTEXT (already fetched — do NOT re-fetch these via API): The user's current state is pre-loaded in your context. Use these variables directly: {active_goals} = their active goals with progress; {progress_summary} = momentum per goal; {weekly_focus_goals} = top 2 goals to work on this week; {knowledge_summary} = what they already know per goal; {emotional_trend} = overall trend (thriving/stable/stressed/burnout_risk); {avg_stress} = average stress last 7 days (1-10); {emotional_summary} = recent moods; {coaching_style} = detailed or brief; {recharge_activity} = what helps them recharge; {plan_notes} = auto-adjusted plan notes from their history.",
+
+					"STEP 1 — EMOTIONAL AWARENESS: Before any goal coaching, read {emotional_trend} and {plan_notes}. If emotional_trend is 'burnout_risk' or 'stressed', open with empathy and acknowledge their state. Reference {emotional_summary} to show you remember their recent experiences. Ask how they are feeling today in one warm sentence.",
+
+					"STEP 2 — IF STRESSED OR BURNED OUT (emotional_trend is stressed or burnout_risk): Do NOT mention goals. Acknowledge with empathy. Suggest one recovery activity based on their {recharge_activity} preference — a short walk, their favourite kind of movie, calling someone they love, or rest. Log their state via POST {butterbase_api_url}/emotional_states with mood, stress_level, energy_level, context, user_id. Log your suggestion via POST {butterbase_api_url}/activity_suggestions with type, title, reason, user_id. Then close warmly — goals will wait. Use header Authorization: Bearer {access_token}.",
+
+					"STEP 3 — GOAL COACHING (when user is ready or emotional_trend is stable/thriving): Reference {active_goals} and {progress_summary} — do not re-fetch. Highlight {weekly_focus_goals} as the recommended focus. Reference {knowledge_summary} to tailor your coaching to their actual skill level — don't explain concepts they already know.",
+
+					"STEP 4 — PRIORITIZATION: If the user asks what to work on, apply {plan_notes} — this contains auto-calculated guidance on which goals are stalling, which have momentum, and whether to reduce intensity due to stress. Present the rationale conversationally, not as a list of data.",
+
+					"STEP 5 — PROGRESS LOGGING: When a user reports completing work, log it via POST {butterbase_api_url}/goal_progress with goal_id (from {active_goals}), progress_pct, session_duration_minutes, notes, user_id. Use header Authorization: Bearer {access_token}.",
+
+					"Tone: match {coaching_style} — if 'brief', keep responses under 100 words; if 'detailed', provide full context. Always warm, encouraging, non-judgmental. Celebrate every small win."
+				],
+				"max_waves": 8,
+				"parameters": {}
+			},
+			"input": [{ "lane": "questions", "from": "chat_1" }],
+			"ui": { "position": { "x": 240, "y": 200 }, "measured": { "width": 150, "height": 86 } }
+		},
+		{
+			"id": "response_answers_1",
+			"provider": "response_answers",
+			"config": { "laneName": "answers" },
+			"input": [{ "lane": "answers", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 460, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "llm_anthropic_1",
+			"provider": "llm_anthropic",
+			"config": {
+				"profile": "claude-sonnet",
+				"claude-sonnet": {
+					"apikey": "${ROCKETRIDE_ANTHROPIC_KEY}",
+					"model": "claude-sonnet-4-6"
+				},
+				"parameters": {}
+			},
+			"control": [{ "classType": "llm", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 130, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "memory_internal_1",
+			"provider": "memory_internal",
+			"config": { "type": "memory_internal" },
+			"control": [{ "classType": "memory", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 310, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "tool_http_request_1",
+			"provider": "tool_http_request",
+			"config": { "type": "tool_http_request" },
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 490, "y": 360 }, "measured": { "width": 150, "height": 40 } }
+		}
+	],
+	"project_id": "29409d81-24b0-4048-a8d9-d5dde4be94cf",
+	"viewport": { "x": 0, "y": 0, "zoom": 1 },
+	"version": 1
+}

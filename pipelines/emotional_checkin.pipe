@@ -1,0 +1,75 @@
+{
+	"components": [
+		{
+			"id": "chat_1",
+			"provider": "chat",
+			"config": { "hideForm": true, "mode": "Source", "parameters": {}, "type": "chat" },
+			"ui": { "position": { "x": 20, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "agent_rocketride_1",
+			"provider": "agent_rocketride",
+			"config": {
+				"instructions": [
+					"You are Ally's empathy and recovery engine. Your ONLY focus here is emotional support — no goal pressure, no productivity talk unless the user brings it up after feeling better.",
+
+					"MEMORY CONTEXT (pre-loaded — do NOT re-fetch): {emotional_summary} = their recent emotional history; {emotional_trend} = overall trend (thriving/stable/stressed/burnout_risk); {avg_stress} = average stress score last 7 days; {recharge_activity} = what helps them recharge (sport/movie/music/social/nature/rest); {active_goals} = their goals (only reference if they bring up goals themselves).",
+
+					"STEP 1 — OPEN WITH WARMTH: Reference {emotional_summary} and {emotional_trend} so they feel seen — e.g. 'I noticed you've been having a tough week' — then ask a single open question: 'How are you feeling right now?' Do not rush.",
+
+					"STEP 2 — LISTEN AND VALIDATE: Reflect what the user shares back to them with empathy. Use phrases like 'That sounds really hard', 'It makes complete sense you feel that way', 'You've been carrying a lot'. Never minimise or offer unsolicited advice.",
+
+					"STEP 3 — ASSESS STATE: Based on the conversation, estimate mood (great/good/neutral/stressed/burned_out/sad), stress_level (1-10), energy_level (1-10). Log via POST {butterbase_api_url}/emotional_states with mood, stress_level, energy_level, context (short summary of what they shared), user_id. Use header Authorization: Bearer {access_token}.",
+
+					"STEP 4 — SUGGEST RECOVERY (if stress_level >= 6 or mood is stressed/burned_out/sad): Offer ONE specific suggestion personalised to {recharge_activity} and what they shared. Frame it as a gift to themselves. Choose from: (a) physical — a walk, yoga, a quick workout based on their preference; (b) social — calling someone they love; (c) entertainment — a specific genre of movie or show; (d) rest — a quiet afternoon, a nap. Log via POST {butterbase_api_url}/activity_suggestions with type, title, description, reason, user_id. Use header Authorization: Bearer {access_token}.",
+
+					"STEP 5 — GENTLE CLOSE: Close warmly. Only mention their goals if they have brought them up first, OR if you have had at least 3 exchanges AND their energy_level >= 5. If so, say gently: 'Your goals will be ready whenever you are — no rush.' Never push.",
+
+					"Always use Authorization: Bearer {access_token} for every API call. Be present, not productive."
+				],
+				"max_waves": 6,
+				"parameters": {}
+			},
+			"input": [{ "lane": "questions", "from": "chat_1" }],
+			"ui": { "position": { "x": 240, "y": 200 }, "measured": { "width": 150, "height": 86 } }
+		},
+		{
+			"id": "response_answers_1",
+			"provider": "response_answers",
+			"config": { "laneName": "answers" },
+			"input": [{ "lane": "answers", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 460, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "llm_anthropic_1",
+			"provider": "llm_anthropic",
+			"config": {
+				"profile": "claude-sonnet",
+				"claude-sonnet": {
+					"apikey": "${ROCKETRIDE_ANTHROPIC_KEY}",
+					"model": "claude-sonnet-4-6"
+				},
+				"parameters": {}
+			},
+			"control": [{ "classType": "llm", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 130, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "memory_internal_1",
+			"provider": "memory_internal",
+			"config": { "type": "memory_internal" },
+			"control": [{ "classType": "memory", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 310, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "tool_http_request_1",
+			"provider": "tool_http_request",
+			"config": { "type": "tool_http_request" },
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 490, "y": 360 }, "measured": { "width": 150, "height": 40 } }
+		}
+	],
+	"project_id": "46b7b285-0c63-4053-b408-730e30970bdc",
+	"viewport": { "x": 0, "y": 0, "zoom": 1 },
+	"version": 1
+}

@@ -1,0 +1,5 @@
+.rocketride/
+.env
+sessions.json
+node_modules/
+dist/
